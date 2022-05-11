@@ -27,7 +27,14 @@ pip install -r requirements.txt
 
 6. Use docker compose to bring up kafka
 ```sh
-docker-compose up -d
+docker-compose up -d --force-recreate
+```
+
+7. Use the below command to create a topic
+```sh
+docker exec --interactive --tty broker \
+kafka-console-producer --bootstrap-server broker:9092 \
+                       --topic quickstart
 ```
 
 7. Run the producer script, you can edit script to increase rows sent to kafka
