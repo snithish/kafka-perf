@@ -1,6 +1,7 @@
 from pyspark import SparkConf
 from pyspark import SparkContext
 from pyspark.sql import SparkSession
+from pyspark.sql import functions as F
 
 from typing import Iterator
 
@@ -40,7 +41,12 @@ def p(itr: Iterator) -> int:
 def main():
     spark = SparkSession.builder.master("local[3]").appName("KafkaProducer").getOrCreate()
     df = spark.read.option("header", "true").csv("fhvhv_tripdata_2022-02.csv")
+    hash_cols = df.columns + ["rand"]
+    df = (df.withColumn("rand", F.rand(seed=42) * 30000000)
+            .withColumn("hash", F.hash(*hash_cols)))
     dfr = df.limit(100000000).repartition(100)
+    df_count = dfr.count()
+    assert df_count == dfr.distinct().count(), "Duplicate hash"
     print(dfr.count())
     res = dfr.toJSON().mapPartitions(p).collect()
     print(f"Size of partitions sent to kafka: {res}")
